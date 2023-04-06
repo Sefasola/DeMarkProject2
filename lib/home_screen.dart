@@ -12,15 +12,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
-    target: LatLng(33.6844, 73.0479),
-    zoom: 14,
+    target: LatLng(38.7372602484122, 35.473480353568114),
+    zoom: 16,
   );
 
   List<Marker> _marker = [];
   List<Marker> _list = [
     Marker(
         markerId: MarkerId('1'),
-        position: LatLng(33.6844, 73.0479),
+        position: LatLng(38.7372602484122, 35.473480353568114),
         infoWindow: InfoWindow(title: 'My Current Location')),
     Marker(
         markerId: MarkerId('1'),
