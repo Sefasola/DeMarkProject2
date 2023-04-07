@@ -107,16 +107,34 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: GoogleMap(
-        initialCameraPosition: _kGooglePlex,
-        markers: Set<Marker>.of(_marker),
-        mapType: MapType.normal,
-        // myLocationEnabled: true,
-        //compassEnabled: false,
-        onMapCreated: (GoogleMapController controller) {
-          _controller.complete(controller);
+      body: SafeArea(
+        child: GoogleMap(initialCameraPosition: _kGooglePlex,
+          markers: Set<Marker>.of(_marker),
+          mapType: MapType.normal,
+          // myLocationEnabled: true,
+          //compassEnabled: false,
+          onMapCreated: (GoogleMapController controller){
+            _controller.complete(controller);
+          },
+
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.location_disabled_outlined),
+        onPressed: () async{
+          GoogleMapController controller = await _controller.future;
+          controller.animateCamera(CameraUpdate.newCameraPosition(
+              CameraPosition(
+                  target: LatLng(33.738045, 73.084488),//altaki konum simgesine bastığında seni o konuma götürüyor
+                  zoom: 14
+              )
+          ));
+          setState(() {
+
+          });
         },
       ),
+
     );
   }
 }
