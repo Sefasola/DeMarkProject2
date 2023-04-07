@@ -17,7 +17,14 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   List<Marker> _markers = [];
+  List<String> _comments = [];
+  final textController = TextEditingController();
 
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
   // List<Marker> _marker = [];
   // List<Marker> _list = [
   //   Marker(
@@ -111,15 +118,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: GoogleMap(
-          mapType: MapType.hybrid,
           onTap: (LatLng position) async {
-            // Show dialog for entering comment.
             String comment = await showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text('Add Comment'),
                   content: TextField(
+                    controller: textController,
                     decoration: InputDecoration(hintText: 'Enter comment'),
                   ),
                   actions: [
@@ -130,66 +136,102 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextButton(
                       child: Text('ADD'),
                       onPressed: () {
-                        Navigator.of(context).pop("aq Kayserisi");
+                        Navigator.of(context).pop(textController.text!);
+                        textController.clear();
                       },
                     ),
                   ],
                 );
               },
             );
-            setState(() {
-              _markers.add(Marker(
-                markerId: MarkerId(position.toString()),
-                position: position,
-                infoWindow: InfoWindow(title: comment),
+            if (comment != null) {
+              setState(() {
+                _markers.add(Marker(
+                  markerId: MarkerId(position.toString()),
+                  position: position,
+                  infoWindow: InfoWindow(title: comment),
+                ));
+                _comments.add(comment);
+              });
+            }
+          },
+            markers: _markers.map((Marker marker) {
+              return Marker(
+                markerId: marker.markerId,
+                position: marker.position,
+                infoWindow: marker.infoWindow,
                 onTap: () {
-                  // Show comment when marker is tapped.
                   showModalBottomSheet(
                     context: context,
                     builder: (BuildContext context) {
                       return Container(
-                        color: Colors.purpleAccent,
-                        height: 100,
-                        child: Center(child: Text(comment)),
+                        height: 350,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _comments.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return ListTile(
+                                  title: Text(_comments[index]),
+                                  trailing: IconButton(
+                                    icon: Icon(Icons.delete),
+                                    onPressed: () {
+                                      setState(() {
+                                        _comments.removeAt(index);
+                                      });
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text('Add a new comment:'),
+                                    content: TextField(
+                                      controller: textController,
+                                      decoration: InputDecoration(
+                                        hintText: 'Type your comment here...',
+                                      ),
+                                    ),
+                                    actions: [
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _comments.add(textController.text!);
+                                          });
+                                          // Save the new comment to the database or state
+
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Save Comment'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          // Close the alert dialog without saving the comment
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Cancel'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Text('Add a New Comment'),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   );
                 },
-              ));
-            });
-          },
-          markers: _markers.map((Marker marker) {
-            return Marker(
-              markerId: marker.markerId,
-              position: marker.position,
-              infoWindow: marker.infoWindow,
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Container(
-                      height: 250,
-                      child:
-                      Column(
-                        children: [
-                          IconButton(
-                              color: Colors.black,
-                              onPressed: () {
-                                setState(() {
-                                  _markers.remove(marker);
-                                });
-
-                              },
-                              icon: Icon(Icons.remove_circle_outline)),
-                          Center(child: Text(marker.infoWindow.title!)),
-                        ],
-                      ),//
-                    );
-                  },
-                );
-              },
-            );
-          }).toSet(),
+              );
+            }).toSet(),
           initialCameraPosition: CameraPosition(
             target: LatLng(38.729210, 35.483910),
             zoom: 10,
@@ -217,3 +259,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+/*
+target: LatLng(38.729210, 35.483910),
+markers: _markers.map((Marker marker) {
+            return Marker(
+              markerId: marker.markerId,
+              position: marker.position,
+              infoWindow: marker.infoWindow,
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 250,
+                      child:
+                      Column(
+                        children: [
+                          IconButton(
+                              color: Colors.black,
+                              onPressed: () {
+                                setState(() {
+                                  _markers.remove(marker);
+                                });
+
+                              },
+                              icon: Icon(Icons.remove_circle_outline)),
+                          Center(child: Text(marker.infoWindow.title!)),
+                        ],
+                      ),//
+                    );
+                  },
+                );
+              },
+            );
+          }).toSet(),
+
+
+
+
+ */
