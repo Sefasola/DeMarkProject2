@@ -16,27 +16,29 @@ class _HomeScreenState extends State<HomeScreen> {
     zoom: 14,
   );
 
-  List<Marker> _marker = [];
-  List<Marker> _list = [
-    Marker(
-        markerId: MarkerId('1'),
-        position: LatLng(33.6844, 73.0479),
-        infoWindow: InfoWindow(title: 'My Current Location')),
-    Marker(
-        markerId: MarkerId('1'),
-        position: LatLng(33.738045, 73.084488),
-        infoWindow: InfoWindow(title: 'e11 sector')),
-    Marker(
-        markerId: MarkerId('1'),
-        position: LatLng(33.738045, 73.084488),
-        infoWindow: InfoWindow(title: 'e2 sector')),
-  ];
+  List<Marker> _markers = [];
+
+  // List<Marker> _marker = [];
+  // List<Marker> _list = [
+  //   Marker(
+  //       markerId: MarkerId('1'),
+  //       position: LatLng(33.6844, 73.0479),
+  //       infoWindow: InfoWindow(title: 'My Current Location')),
+  //   Marker(
+  //       markerId: MarkerId('1'),
+  //       position: LatLng(33.738045, 73.084488),
+  //       infoWindow: InfoWindow(title: 'e11 sector')),
+  //   Marker(
+  //       markerId: MarkerId('1'),
+  //       position: LatLng(33.738045, 73.084488),
+  //       infoWindow: InfoWindow(title: 'e2 sector')),
+  // ];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _marker.addAll(_list);
+    // _marker.addAll(_list);
   }
 
   @override
@@ -108,33 +110,110 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: SafeArea(
-        child: GoogleMap(initialCameraPosition: _kGooglePlex,
-          markers: Set<Marker>.of(_marker),
-          mapType: MapType.normal,
-          // myLocationEnabled: true,
-          //compassEnabled: false,
-          onMapCreated: (GoogleMapController controller){
-            _controller.complete(controller);
+        child: GoogleMap(
+          mapType: MapType.hybrid,
+          onTap: (LatLng position) async {
+            // Show dialog for entering comment.
+            String comment = await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Add Comment'),
+                  content: TextField(
+                    decoration: InputDecoration(hintText: 'Enter comment'),
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text('CANCEL'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    TextButton(
+                      child: Text('ADD'),
+                      onPressed: () {
+                        Navigator.of(context).pop("aq Kayserisi");
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+            setState(() {
+              _markers.add(Marker(
+                markerId: MarkerId(position.toString()),
+                position: position,
+                infoWindow: InfoWindow(title: comment),
+                onTap: () {
+                  // Show comment when marker is tapped.
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Container(
+                        color: Colors.purpleAccent,
+                        height: 100,
+                        child: Center(child: Text(comment)),
+                      );
+                    },
+                  );
+                },
+              ));
+            });
           },
+          markers: _markers.map((Marker marker) {
+            return Marker(
+              markerId: marker.markerId,
+              position: marker.position,
+              infoWindow: marker.infoWindow,
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 250,
+                      child:
+                      Column(
+                        children: [
+                          IconButton(
+                              color: Colors.black,
+                              onPressed: () {
+                                setState(() {
+                                  _markers.remove(marker);
+                                });
 
+                              },
+                              icon: Icon(Icons.remove_circle_outline)),
+                          Center(child: Text(marker.infoWindow.title!)),
+                        ],
+                      ),//
+                    );
+                  },
+                );
+              },
+            );
+          }).toSet(),
+          initialCameraPosition: CameraPosition(
+            target: LatLng(38.729210, 35.483910),
+            zoom: 10,
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.location_disabled_outlined),
-        onPressed: () async{
-          GoogleMapController controller = await _controller.future;
-          controller.animateCamera(CameraUpdate.newCameraPosition(
-              CameraPosition(
-                  target: LatLng(33.738045, 73.084488),//altaki konum simgesine bastığında seni o konuma götürüyor
-                  zoom: 14
-              )
-          ));
-          setState(() {
-
-          });
-        },
+      floatingActionButton: Align(
+        alignment: Alignment.bottomLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 30),
+          child: FloatingActionButton(
+            child: Icon(Icons.location_disabled_outlined),
+            onPressed: () async {
+              GoogleMapController controller = await _controller.future;
+              controller
+                  .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+                      target: LatLng(33.738045, 73.084488),
+                      //altaki konum simgesine bastığında seni o konuma götürüyor
+                      zoom: 14)));
+              setState(() {});
+            },
+          ),
+        ),
       ),
-
     );
   }
 }
