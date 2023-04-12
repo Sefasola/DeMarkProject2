@@ -14,6 +14,18 @@ class deneme extends StatelessWidget {
     }
   }
 
+  Future<void> postComment(int userId, int messageId, String commentContent) async {
+    String url = 'http://localhost:3306/postComment/postComment.php';
+    Map<String, String> headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+    String body = 'user_id=$userId&comment_content=$commentContent';
+    http.Response response = await http.post(Uri.parse(url), headers: headers, body: body);
+    if (response.statusCode == 200) {
+      print('Comment posted successfully');
+    } else {
+      print('Error posting comment: ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
