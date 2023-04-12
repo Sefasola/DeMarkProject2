@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import './login/login.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Marker> _markers = [];
   List<String> _comments = [];
-  late Map<Marker,String> myMap;
+  late Map<Marker, String> myMap;
   final textController = TextEditingController();
 
   @override
@@ -49,10 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // _marker.addAll(_list);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+  bool isLoggedIn = true;
+
+  PreferredSizeWidget buildAppBar() {
+    if (isLoggedIn) {
+      return AppBar(
         leading: GestureDetector(
           onTap: () {},
           child: Container(
@@ -77,23 +79,26 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginView()),
+              );
+            },
+            icon: const Icon(Icons.login_outlined),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              // handle menu button press
+            },
             icon: const Icon(Icons.menu),
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100.0),
-          child: Container(
-            height: 100,
-            width: 100,
-            color: Colors.white,
-            alignment: Alignment.center,
-            child: const Text('Membership Rank'),
-            margin: EdgeInsets.only(bottom: 5),
+          preferredSize: const Size.fromHeight(20.0),
+          child: Text(
+            "level : admin",
+            textScaleFactor: 1.2,
           ),
         ),
         flexibleSpace: Container(
@@ -116,7 +121,33 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: Radius.circular(30.0),
           ),
         ),
-      ),
+      );
+    } else {
+      return AppBar(
+        centerTitle: true,
+        title: Center(
+          child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginView()),
+                );
+              },
+              child: Text("Click to Login")),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(30.0),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: buildAppBar(),
       body: SafeArea(
         child: GoogleMap(
           // MARKER OBJCET
@@ -126,10 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text('Add Comment'),
+                  title: Text('Add Marker'),
                   content: TextField(
                     controller: textController,
-                    decoration: InputDecoration(hintText: 'Enter comment'),
+                    decoration: InputDecoration(hintText: 'Initial comment'),
                   ),
                   actions: [
                     TextButton(
@@ -149,7 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             if (comment != null) {
               setState(() {
-
                 _markers.add(Marker(
                   markerId: MarkerId(position.toString()),
                   position: position,
@@ -159,82 +189,82 @@ class _HomeScreenState extends State<HomeScreen> {
               });
             }
           },
-            markers: _markers.map((Marker marker) {
-              return Marker(
-                markerId: marker.markerId,
-                position: marker.position,
-                infoWindow: marker.infoWindow,
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Container(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: _comments.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return ListTile(
-                                  title: Text(_comments[index]),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () {
-                                      setState(() {
-                                        _comments.removeAt(index);
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Add a new comment:'),
-                                    content: TextField(
-                                      controller: textController,
-                                      decoration: InputDecoration(
-                                        hintText: 'Type your comment here...',
-                                      ),
+          markers: _markers.map((Marker marker) {
+            return Marker(
+              markerId: marker.markerId,
+              position: marker.position,
+              infoWindow: marker.infoWindow,
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _comments.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return ListTile(
+                                title: Text(_comments[index]),
+                                trailing: IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () {
+                                    setState(() {
+                                      _comments.removeAt(index);
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Add a new comment:'),
+                                  content: TextField(
+                                    controller: textController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Type your comment here...',
                                     ),
-                                    actions: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _comments.add(textController.text!);
-                                          });
-                                          // Save the new comment to the database or state
-
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text('Save Comment'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          // Close the alert dialog without saving the comment
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text('Cancel'),
-                                      ),
-                                    ],
                                   ),
-                                );
-                              },
-                              child: Text('Add a New Comment'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            }).toSet(),
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _comments.add(textController.text!);
+                                        });
+                                        // Save the new comment to the database or state
+
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('Save Comment'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        // Close the alert dialog without saving the comment
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('Cancel'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Text('Add a New Comment'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          }).toSet(),
           initialCameraPosition: CameraPosition(
             target: LatLng(38.729210, 35.483910),
             zoom: 10,

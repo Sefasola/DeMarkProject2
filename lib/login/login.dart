@@ -13,7 +13,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  bool loginStatus = false;
+  bool isLoggedIn = false;
 
   Future<List<Map<String, dynamic>>> login(
       String username, String password) async {
@@ -25,7 +25,7 @@ class _LoginViewState extends State<LoginView> {
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       print("successfully logged in");
-      loginStatus = true;
+      isLoggedIn = true;
       return data.map((e) => Map<String, dynamic>.from(e)).toList();
     } else {
       throw Exception('Failed to login');
@@ -61,8 +61,8 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () async {
                 var result = await login(
                     usernameController.text, passwordController.text);
-                if (loginStatus == true) {
-                  Navigator.of(context).pop();
+                if (isLoggedIn == true) {
+                  Navigator.of(context).pop(isLoggedIn);
                 } else {
                   print("failed");
                 }

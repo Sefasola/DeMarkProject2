@@ -232,14 +232,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
-  provider:
-    dependency: "direct main"
-    description:
-      name: provider
-      sha256: a4103f43cfac54718d1938cc628d6d7620177de1a5d00db621d5ab414e4286e5
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.1+1"
   sky_engine:
     dependency: transitive
     description: flutter
