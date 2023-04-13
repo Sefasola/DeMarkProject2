@@ -11,13 +11,14 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  String urlMain = '192.168.0.19';
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoggedIn = false;
 
   Future<List<Map<String, dynamic>>> login(
       String username, String password) async {
-    final url = 'http://192.168.0.50/project/logincheck.php';
+    final url = 'http://${urlMain}/project/logincheck.php';
     final response = await http.post(Uri.parse(url), body: {
       'username': username,
       'password': password,

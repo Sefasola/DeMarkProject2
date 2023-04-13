@@ -13,22 +13,27 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String urlMain = '192.168.0.19';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
     zoom: 14,
   );
+
   // Post fonksiyonu
 
 
   List<Marker> _markers = [];
   List<String> _comments = [];
   late Map<Marker, String> myMap;
+  late Future<List<Marker>> futuremarker;
   final textController = TextEditingController();
- //Post comment
-  Future<void> postComment(int userId, String commentContent, String timestamp, int markerId) async {
+
+  //Post comment
+  Future<void> postComment(int userId, String commentContent, String timestamp,
+      int markerId) async {
     final response = await http.post(
-      Uri.parse('http://192.168.0.50/project/postComment.php'),
+      Uri.parse('http://${urlMain}/project/postComment.php'),
       body: {
         'user_id': userId,
         'comment_content': commentContent,
@@ -46,9 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future postMarker(double posX, double posY, String title, String message) async {
+  Future postMarker(double posX, double posY, String title,
+      String message) async {
     final response = await http.post(
-        Uri.parse('http://192.168.0.50/project/postMarker.php'),
+        Uri.parse('http://${urlMain}/project/postMarker.php'),
         body: {
           'Position_X': posX.toString(),
           'Position_Y': posY.toString(),
@@ -71,22 +77,27 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('Failed to post marker: ${response.body}');
     }
   }
+
   //Bütün markerları alma fonksiyonu
   Future<List<Marker>> getAllMarkers() async {
-    final response = await http.get(Uri.parse('http://192.168.0.50/project/getAllMarkers.php'));
-
+    final response = await http.get(
+        Uri.parse('http://${urlMain}/project/getAllMarkers.php'));
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as List<dynamic>;
+
       final List<Marker> markers = data
-          .map((markerJson) => Marker(
-        markerId: MarkerId(markerJson['Marker_ID'].toString()),
-        position: LatLng(
-            double.parse(markerJson['Position_X']),
-            double.parse(markerJson['Position_Y'])),
-        infoWindow: InfoWindow(
-            title: markerJson['Title'],
-            snippet: markerJson['Message']),
-      ))
+          .map((markerJson) =>
+          Marker(
+            markerId: MarkerId(markerJson["marker_id"].toString()),
+            position: LatLng(
+                double.parse(markerJson["position_x"]),
+                double.parse(markerJson["position_y"])),
+            infoWindow: InfoWindow(
+                title: markerJson['title'],
+                snippet: markerJson['message']),
+          ))
           .toList();
 
       return markers;
@@ -94,9 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('Failed to get markers: ${response.body}');
     }
   }
+
   // markerları futurdan kurtarma fonksyonu
-
-
 
 
   @override
@@ -104,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
     textController.dispose();
     super.dispose();
   }
+
   // List<Marker> _marker = [];
   // List<Marker> _list = [
   //   Marker(
@@ -122,14 +133,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-
     super.initState();
-    getAllMarkers().then((markers) {
-      setState(() {
-        _markers = markers;
-      });
-    });
-
+    futuremarker = getAllMarkers();
   }
 
 
@@ -232,150 +237,166 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: buildAppBar(),
       body: SafeArea(
-        child: GoogleMap(
-          // MARKER OBJCET
-          //
-          onTap: (LatLng position) async {
-            String comment = await showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('Add Marker'),
-                  content: TextField(
-                    controller: textController,
-                    decoration: InputDecoration(hintText: 'Initial comment'),
-                  ),
-                  actions: [
-                    TextButton(
-                      child: Text('CANCEL'),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    TextButton(
-                      child: Text('ADD'),
-                      onPressed: () {
-                        print(position.longitude);
-                        postMarker(position.latitude, position.longitude, textController.text, textController.text);
-                        Navigator.of(context).pop(textController.text!);
-                        textController.clear();
+          child: FutureBuilder<List<Marker>>(
+              future: futuremarker,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  _markers.addAll(snapshot.data!);
+                }
+                else{
+                  print("girmedi");
+                  print('Data retrieved: ${snapshot.data}');
+                }
+                return GoogleMap(
+                  // MARKER OBJCET
+                  //
+                  onTap: (LatLng position) async {
+                    String comment = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Add Marker'),
+                          content: TextField(
+                            controller: textController,
+                            decoration: InputDecoration(hintText: 'Initial comment'),
+                          ),
+                          actions: [
+                            TextButton(
+                              child: Text('CANCEL'),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            TextButton(
+                              child: Text('ADD'),
+                              onPressed: () {
+                                print(position.longitude);
+                                postMarker(position.latitude, position.longitude, textController.text, textController.text);
+                                Navigator.of(context).pop(textController.text!);
+                                textController.clear();
+                              },
+                            ),
+                          ],
+                        );
                       },
-                    ),
-                  ],
-                );
-              },
-            );
-            if (comment != null) {
-              setState(() {
-                _markers.add(Marker(
-                  markerId: MarkerId(position.toString()),
-                  position: position,
-                  infoWindow: InfoWindow(title: comment),
-                ));
-                _comments.add(comment);
-              });
-            }
-          },
-          markers: _markers.map((Marker marker) {
-            return Marker(
-              markerId: marker.markerId,
-              position: marker.position,
-              infoWindow: marker.infoWindow,
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Container(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: _comments.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return ListTile(
-                                title: Text(_comments[index]),
-                                trailing: IconButton(
-                                  icon: Icon(Icons.delete),
-                                  onPressed: () {
-                                    setState(() {
-                                      _comments.removeAt(index);
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text('Add a new comment:'),
-                                  content: TextField(
-                                    controller: textController,
-                                    decoration: InputDecoration(
-                                      hintText: 'Type your comment here...',
-                                    ),
-                                  ),
-                                  actions: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _comments.add(textController.text!);
-                                        });
-                                        // Save the new comment to the database or state
-
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Save Comment'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        // Close the alert dialog without saving the comment
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Cancel'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: Text('Add a New Comment'),
-                          ),
-                        ],
-                      ),
                     );
+                    if (comment != null) {
+                      setState(() {
+                        _markers.add(Marker(
+                          markerId: MarkerId(position.toString()),
+                          position: position,
+                          infoWindow: InfoWindow(title: comment),
+                        ));
+                        _comments.add(comment);
+                      });
+                    }
                   },
+                  markers: _markers.map((Marker marker) {
+                    return Marker(
+                      markerId: marker.markerId,
+                      position: marker.position,
+                      infoWindow: marker.infoWindow,
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Container(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: _comments.length,
+                                    itemBuilder: (BuildContext context, int index) {
+                                      return ListTile(
+                                        title: Text(_comments[index]),
+                                        trailing: IconButton(
+                                          icon: Icon(Icons.delete),
+                                          onPressed: () {
+                                            setState(() {
+                                              _comments.removeAt(index);
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            AlertDialog(
+                                              title: Text('Add a new comment:'),
+                                              content: TextField(
+                                                controller: textController,
+                                                decoration: InputDecoration(
+                                                  hintText: 'Type your comment here...',
+                                                ),
+                                              ),
+                                              actions: [
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _comments.add(textController.text!);
+                                                    });
+                                                    // Save the new comment to the database or state
+
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text('Save Comment'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    // Close the alert dialog without saving the comment
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text('Cancel'),
+                                                ),
+                                              ],
+                                            ),
+                                      );
+                                    },
+                                    child: Text('Add a New Comment'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  }).toSet(),
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(38.729210, 35.483910),
+                    zoom: 10,
+                  ),
                 );
-              },
-            );
-          }).toSet(),
-          initialCameraPosition: CameraPosition(
-            target: LatLng(38.729210, 35.483910),
-            zoom: 10,
-          ),
-        ),
-      ),
-      floatingActionButton: Align(
-        alignment: Alignment.bottomLeft,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 30),
-          child: FloatingActionButton(
-            child: Icon(Icons.location_disabled_outlined),
-            onPressed: () async {
-              GoogleMapController controller = await _controller.future;
-              controller
-                  .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-                      target: LatLng(33.738045, 73.084488),
-                      //altaki konum simgesine bastığında seni o konuma götürüyor
-                      zoom: 14)));
-              setState(() {});
-            },
-          ),
-        ),
-      ),
+              }
+          )
+
+
+          ,
+    ),
+    floatingActionButton: Align(
+    alignment: Alignment.bottomLeft,
+    child: Padding(
+    padding: const EdgeInsets.only(left: 30),
+    child: FloatingActionButton(
+    child: Icon(Icons.location_disabled_outlined),
+    onPressed: () async {
+    GoogleMapController controller = await _controller.future;
+    controller
+        .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+    target: LatLng(33.738045, 73.084488),
+    //altaki konum simgesine bastığında seni o konuma götürüyor
+    zoom: 14)));
+    setState(() {});
+    },
+    ),
+    ),
+    ),
     );
-  }
+    }
 }
 /*
 target: LatLng(38.729210, 35.483910),
