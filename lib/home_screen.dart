@@ -30,15 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final textController = TextEditingController();
 
   //Post comment
-  Future<void> postComment(int userId, String commentContent, String timestamp,
-      int markerId) async {
+  Future<void> postComment(int userId, String commentContent,
+      int markerId,String timestamp) async {
     final response = await http.post(
       Uri.parse('http://${urlMain}/project/postComment.php'),
       body: {
         'user_id': userId,
         'comment_content': commentContent,
-        'timestamp': timestamp,
-        'marker_id': markerId,
+        'Marker_ID': markerId,
       },
     );
 
@@ -105,8 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('Failed to get markers: ${response.body}');
     }
   }
+// post comment Fonksyonu
 
-  // markerları futurdan kurtarma fonksyonu
 
 
   @override
@@ -336,9 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                               actions: [
                                                 ElevatedButton(
                                                   onPressed: () {
-                                                    setState(() {
-                                                      _comments.add(textController.text!);
-                                                    });
+                                                    int id = int.parse(marker.markerId.value.split('_')[0]);
+                                                    postComment(1, textController.text,id,DateTime.now().toString());
+
                                                     // Save the new comment to the database or state
 
                                                     Navigator.of(context).pop();
