@@ -1,14 +1,5 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "project";
-$port = 3306;
-
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname, $port);
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 300);
-mysqli_query($conn, "SET GLOBAL max_allowed_packet=100000000");
+include 'conn.php';
 
 // Check connection
 if (!$conn) {
@@ -20,7 +11,7 @@ $username = mysqli_real_escape_string($conn, $_POST['username']);
 $password = mysqli_real_escape_string($conn, $_POST['password']);
 
 // Query the database
-$sql = "SELECT user_id, username, password, Level FROM usertable WHERE username = '$username' AND password = '$password'";
+$sql = "SELECT User_ID, User_name, pass_word, Level FROM usertable WHERE User_name = '$username' AND pass_word = '$password'";
 $result = mysqli_query($conn, $sql);
 
 // Check for errors
@@ -36,9 +27,9 @@ if (mysqli_num_rows($result) > 0) {
     // Loop through the result set
     while ($row = mysqli_fetch_assoc($result)) {
         $user = array(
-            'user_id' => $row['user_id'],
-            'username' => $row['username'],
-            'level' => $row['level']
+            'User_ID' => $row['User_ID'],
+            'User_name' => $row['User_name'],
+            'Level' => $row['Level']
         );
         array_push($users, $user);
     }

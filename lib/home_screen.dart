@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import './login/login.dart';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,11 +18,86 @@ class _HomeScreenState extends State<HomeScreen> {
     target: LatLng(33.6844, 73.0479),
     zoom: 14,
   );
+  // Post fonksiyonu
+
 
   List<Marker> _markers = [];
   List<String> _comments = [];
   late Map<Marker, String> myMap;
   final textController = TextEditingController();
+ //Post comment
+  Future<void> postComment(int userId, String commentContent, String timestamp, int markerId) async {
+    final response = await http.post(
+      Uri.parse('http://192.168.0.50/project/postComment.php'),
+      body: {
+        'user_id': userId,
+        'comment_content': commentContent,
+        'timestamp': timestamp,
+        'marker_id': markerId,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Comment was posted successfully
+      print('Comment posted successfully');
+    } else {
+      // Comment posting failed
+      throw Exception('Failed to post comment: ${response.body}');
+    }
+  }
+
+  Future postMarker(double posX, double posY, String title, String message) async {
+    final response = await http.post(
+        Uri.parse('http://192.168.0.50/project/postMarker.php'),
+        body: {
+          'Position_X': posX.toString(),
+          'Position_Y': posY.toString(),
+          'title': title,
+          'message': message,
+        });
+
+    if (response.statusCode == 200) {
+      // Marker was posted successfully, parse the response
+      final data = jsonDecode(response.body);
+      final markerId = data['marker_id'];
+      final marker = Marker(
+        markerId: MarkerId(markerId.toString()),
+        position: LatLng(posX, posY),
+        infoWindow: InfoWindow(title: title, snippet: message),
+      );
+      return marker;
+    } else {
+      // Marker posting failed
+      throw Exception('Failed to post marker: ${response.body}');
+    }
+  }
+  //Bütün markerları alma fonksiyonu
+  Future<List<Marker>> getAllMarkers() async {
+    final response = await http.get(Uri.parse('http://192.168.0.50/project/getAllMarkers.php'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as List<dynamic>;
+      final List<Marker> markers = data
+          .map((markerJson) => Marker(
+        markerId: MarkerId(markerJson['Marker_ID'].toString()),
+        position: LatLng(
+            double.parse(markerJson['Position_X']),
+            double.parse(markerJson['Position_Y'])),
+        infoWindow: InfoWindow(
+            title: markerJson['Title'],
+            snippet: markerJson['Message']),
+      ))
+          .toList();
+
+      return markers;
+    } else {
+      throw Exception('Failed to get markers: ${response.body}');
+    }
+  }
+  // markerları futurdan kurtarma fonksyonu
+
+
+
 
   @override
   void dispose() {
@@ -45,10 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
-    // _marker.addAll(_list);
+    getAllMarkers().then((markers) {
+      setState(() {
+        _markers = markers;
+      });
+    });
+
   }
+
 
   bool isLoggedIn = true;
 
@@ -170,6 +253,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextButton(
                       child: Text('ADD'),
                       onPressed: () {
+                        print(position.longitude);
+                        postMarker(position.latitude, position.longitude, textController.text, textController.text);
                         Navigator.of(context).pop(textController.text!);
                         textController.clear();
                       },

@@ -17,7 +17,7 @@ class _LoginViewState extends State<LoginView> {
 
   Future<List<Map<String, dynamic>>> login(
       String username, String password) async {
-    final url = 'http://192.168.1.194/project/logincheck.php';
+    final url = 'http://192.168.0.50/project/logincheck.php';
     final response = await http.post(Uri.parse(url), body: {
       'username': username,
       'password': password,
