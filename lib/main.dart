@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import './login/loginStatus.dart';
 import 'home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  Provider.debugCheckInvalidValueType = null;
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => LoginStatus(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

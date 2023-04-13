@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 import './login/login.dart';
 import 'package:http/http.dart' as http;
+import 'login/loginStatus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String urlMain = '192.168.0.19';
+  String urlMain = '192.168.1.194';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
@@ -22,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Post fonksiyonu
 
-
   List<Marker> _markers = [];
   List<String> _comments = [];
   late Map<Marker, String> myMap;
@@ -30,8 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final textController = TextEditingController();
 
   //Post comment
-  Future<void> postComment(int userId, String commentContent, String timestamp,
-      int markerId) async {
+  Future<void> postComment(
+      int userId, String commentContent, String timestamp, int markerId) async {
     final response = await http.post(
       Uri.parse('http://${urlMain}/project/postComment.php'),
       body: {
@@ -51,16 +52,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future postMarker(double posX, double posY, String title,
-      String message) async {
-    final response = await http.post(
-        Uri.parse('http://${urlMain}/project/postMarker.php'),
-        body: {
-          'Position_X': posX.toString(),
-          'Position_Y': posY.toString(),
-          'title': title,
-          'message': message,
-        });
+  Future postMarker(
+      double posX, double posY, String title, String message) async {
+    final response = await http
+        .post(Uri.parse('http://${urlMain}/project/postMarker.php'), body: {
+      'Position_X': posX.toString(),
+      'Position_Y': posY.toString(),
+      'title': title,
+      'message': message,
+    });
 
     if (response.statusCode == 200) {
       // Marker was posted successfully, parse the response
@@ -80,24 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   //Bütün markerları alma fonksiyonu
   Future<List<Marker>> getAllMarkers() async {
-    final response = await http.get(
-        Uri.parse('http://${urlMain}/project/getAllMarkers.php'));
+    final response = await http
+        .get(Uri.parse('http://${urlMain}/project/getAllMarkers.php'));
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as List<dynamic>;
 
       final List<Marker> markers = data
-          .map((markerJson) =>
-          Marker(
-            markerId: MarkerId(markerJson["marker_id"].toString()),
-            position: LatLng(
-                double.parse(markerJson["position_x"]),
-                double.parse(markerJson["position_y"])),
-            infoWindow: InfoWindow(
-                title: markerJson['title'],
-                snippet: markerJson['message']),
-          ))
+          .map((markerJson) => Marker(
+                markerId: MarkerId(markerJson["marker_id"].toString()),
+                position: LatLng(double.parse(markerJson["position_x"]),
+                    double.parse(markerJson["position_y"])),
+                infoWindow: InfoWindow(
+                    title: markerJson['title'], snippet: markerJson['message']),
+              ))
           .toList();
 
       return markers;
@@ -107,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // markerları futurdan kurtarma fonksyonu
-
 
   @override
   void dispose() {
@@ -137,113 +133,120 @@ class _HomeScreenState extends State<HomeScreen> {
     futuremarker = getAllMarkers();
   }
 
-
-  bool isLoggedIn = true;
-
-  PreferredSizeWidget buildAppBar() {
-    if (isLoggedIn) {
-      return AppBar(
-        leading: GestureDetector(
-          onTap: () {},
-          child: Container(
-            margin: const EdgeInsets.only(left: 10),
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Color(0xFF5291f4),
-              shape: BoxShape.circle,
-            ),
-            child: const CircleAvatar(
-              backgroundImage: NetworkImage(
-                  'https://i01.sozcucdn.com/wp-content/uploads/2016/09/mustafa-kemal-ataturk.jpg'),
-            ),
-          ),
-        ),
-        title: const Text(
-          'Name',
-          style: TextStyle(
-            fontFamily: 'Nunito',
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginView()),
-              );
-            },
-            icon: const Icon(Icons.login_outlined),
-          ),
-          IconButton(
-            onPressed: () {
-              // handle menu button press
-            },
-            icon: const Icon(Icons.menu),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(20.0),
-          child: Text(
-            "level : admin",
-            textScaleFactor: 1.2,
-          ),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(30.0),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFe8eaed),
-                Color(0xFF5291f4),
-              ],
-            ),
-          ),
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(30.0),
-          ),
-        ),
-      );
-    } else {
-      return AppBar(
-        centerTitle: true,
-        title: Center(
-          child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginView()),
-                );
-              },
-              child: Text("Click to Login")),
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(30.0),
-          ),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: buildAppBar(),
-      body: SafeArea(
+    bool islogged = Provider.of<LoginStatus>(context, listen: false).isLoggedIn;
+    return MultiProvider(
+      providers: [
+        Provider<LoginStatus>(
+          create: (_) => LoginStatus(),
+        ),
+      ],
+      child: MaterialApp(
+          home: Scaffold(
+        appBar: PreferredSize(
+            preferredSize: Size.fromHeight(80.0),
+            child:
+                Consumer<LoginStatus>(builder: (context, loginStatus, child) {
+              if (islogged) {
+                return AppBar(
+                  leading: GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 10),
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF5291f4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        backgroundImage: NetworkImage(
+                            'https://i01.sozcucdn.com/wp-content/uploads/2016/09/mustafa-kemal-ataturk.jpg'),
+                      ),
+                    ),
+                  ),
+                  title: const Text(
+                    'Name',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                    ),
+                  ),
+                  centerTitle: true,
+                  actions: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginView()),
+                        );
+                      },
+                      icon: const Icon(Icons.login_outlined),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // handle menu button press
+                      },
+                      icon: const Icon(Icons.menu),
+                    ),
+                  ],
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(20.0),
+                    child: Text(
+                      "level : admin",
+                      textScaleFactor: 1.2,
+                    ),
+                  ),
+                  flexibleSpace: Container(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(30.0),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFe8eaed),
+                          Color(0xFF5291f4),
+                        ],
+                      ),
+                    ),
+                  ),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(30.0),
+                    ),
+                  ),
+                );
+              } else {
+                return AppBar(
+                  centerTitle: true,
+                  title: Center(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginView()),
+                          );
+                        },
+                        child: Text("Click to Login")),
+                  ),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(30.0),
+                    ),
+                  ),
+                );
+              }
+            })),
+        body: SafeArea(
           child: FutureBuilder<List<Marker>>(
               future: futuremarker,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   _markers.addAll(snapshot.data!);
-                }
-                else{
+                } else {
                   print("girmedi");
                   print('Data retrieved: ${snapshot.data}');
                 }
@@ -258,7 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: Text('Add Marker'),
                           content: TextField(
                             controller: textController,
-                            decoration: InputDecoration(hintText: 'Initial comment'),
+                            decoration:
+                                InputDecoration(hintText: 'Initial comment'),
                           ),
                           actions: [
                             TextButton(
@@ -269,7 +273,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text('ADD'),
                               onPressed: () {
                                 print(position.longitude);
-                                postMarker(position.latitude, position.longitude, textController.text, textController.text);
+                                postMarker(
+                                    position.latitude,
+                                    position.longitude,
+                                    textController.text,
+                                    textController.text);
                                 Navigator.of(context).pop(textController.text!);
                                 textController.clear();
                               },
@@ -305,7 +313,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ListView.builder(
                                     shrinkWrap: true,
                                     itemCount: _comments.length,
-                                    itemBuilder: (BuildContext context, int index) {
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
                                       return ListTile(
                                         title: Text(_comments[index]),
                                         trailing: IconButton(
@@ -324,36 +333,37 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onPressed: () {
                                       showDialog(
                                         context: context,
-                                        builder: (context) =>
-                                            AlertDialog(
-                                              title: Text('Add a new comment:'),
-                                              content: TextField(
-                                                controller: textController,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Type your comment here...',
-                                                ),
-                                              ),
-                                              actions: [
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _comments.add(textController.text!);
-                                                    });
-                                                    // Save the new comment to the database or state
-
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: Text('Save Comment'),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    // Close the alert dialog without saving the comment
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: Text('Cancel'),
-                                                ),
-                                              ],
+                                        builder: (context) => AlertDialog(
+                                          title: Text('Add a new comment:'),
+                                          content: TextField(
+                                            controller: textController,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Type your comment here...',
                                             ),
+                                          ),
+                                          actions: [
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _comments.add(
+                                                      textController.text!);
+                                                });
+                                                // Save the new comment to the database or state
+
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Save Comment'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                // Close the alert dialog without saving the comment
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Cancel'),
+                                            ),
+                                          ],
+                                        ),
                                       );
                                     },
                                     child: Text('Add a New Comment'),
@@ -371,32 +381,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     zoom: 10,
                   ),
                 );
-              }
-          )
-
-
-          ,
-    ),
-    floatingActionButton: Align(
-    alignment: Alignment.bottomLeft,
-    child: Padding(
-    padding: const EdgeInsets.only(left: 30),
-    child: FloatingActionButton(
-    child: Icon(Icons.location_disabled_outlined),
-    onPressed: () async {
-    GoogleMapController controller = await _controller.future;
-    controller
-        .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-    target: LatLng(33.738045, 73.084488),
-    //altaki konum simgesine bastığında seni o konuma götürüyor
-    zoom: 14)));
-    setState(() {});
-    },
-    ),
-    ),
-    ),
+              }),
+        ),
+        floatingActionButton: Align(
+          alignment: Alignment.bottomLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 30),
+            child: FloatingActionButton(
+              child: Icon(Icons.location_disabled_outlined),
+              onPressed: () async {
+                GoogleMapController controller = await _controller.future;
+                controller.animateCamera(
+                    CameraUpdate.newCameraPosition(CameraPosition(
+                        target: LatLng(33.738045, 73.084488),
+                        //altaki konum simgesine bastığında seni o konuma götürüyor
+                        zoom: 14)));
+                setState(() {});
+              },
+            ),
+          ),
+        ),
+      )),
     );
-    }
+  }
 }
 /*
 target: LatLng(38.729210, 35.483910),

@@ -2,22 +2,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:project2/home_screen.dart';
+import 'package:provider/provider.dart';
+import 'loginStatus.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  const LoginView({Key? key});
 
   @override
   _LoginViewState createState() => _LoginViewState();
 }
 
 class _LoginViewState extends State<LoginView> {
-  String urlMain = '192.168.0.19';
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLoggedIn = false;
+  final String urlMain = '192.168.1.194';
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-  Future<List<Map<String, dynamic>>> login(
-      String username, String password) async {
+  Future<bool> login(String username, String password) async {
     final url = 'http://${urlMain}/project/logincheck.php';
     final response = await http.post(Uri.parse(url), body: {
       'username': username,
@@ -25,12 +25,13 @@ class _LoginViewState extends State<LoginView> {
     });
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      print("successfully logged in");
-      isLoggedIn = true;
-      return data.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to login');
+      if (data.isNotEmpty) {
+        print('Successfully logged in');
+        return true;
+      }
     }
+    print('Failed to login');
+    return false;
   }
 
   @override
@@ -40,7 +41,7 @@ class _LoginViewState extends State<LoginView> {
         title: Text('Login Page'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -60,15 +61,32 @@ class _LoginViewState extends State<LoginView> {
             SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () async {
-                var result = await login(
+                final bool loginSuccess = await login(
                     usernameController.text, passwordController.text);
-                if (isLoggedIn == true) {
-                  Navigator.of(context).pop(isLoggedIn);
+                if (loginSuccess) {
+                  Provider.of<LoginStatus>(context, listen: false)
+                      .toggleLogStatus();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (isLoggedIn) => HomeScreen()),
+                  );
                 } else {
-                  print("failed");
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Incorrect username or password'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 }
-                //Map<String, dynamic> firstElement = result[0];
-                //String existedName = firstElement['User_name'];
               },
               child: Text('Login'),
             ),
