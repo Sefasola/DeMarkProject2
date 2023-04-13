@@ -38,8 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: {
         'user_id': userId,
         'comment_content': commentContent,
-        'timestamp': timestamp,
-        'marker_id': markerId,
+        'Marker_ID': markerId,
       },
     );
 
@@ -102,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('Failed to get markers: ${response.body}');
     }
   }
+// post comment Fonksyonu
 
   // markerları futurdan kurtarma fonksyonu
 
