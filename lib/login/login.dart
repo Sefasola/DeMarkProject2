@@ -82,8 +82,8 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () async {
                 final bool loginSuccess = await login(
                     usernameController.text, passwordController.text);
-                String name = getUsername(
-                    usernameController.text, passwordController.text) as String;
+                /*String name = getUsername(
+                    usernameController.text, passwordController.text) as String;*/
                 //print(name);
                 if (loginSuccess) {
                   Provider.of<LoginStatus>(context, listen: false)

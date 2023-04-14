@@ -65,6 +65,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  //itertaion-2 notes
+  //--------------------
+//will be re-arranged to take user_id as input also
+//include the comments to access user_id
+//implement a filter to search category for places
+//3 weeks (05.05.23)
   Future postMarker(
       double posX, double posY, String title, String message) async {
     final response = await http
