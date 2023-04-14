@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import './login/login.dart';
@@ -30,24 +31,37 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Marker>> futuremarker;
   final textController = TextEditingController();
 
+//fetching the data from comments specialized to the selected marker
+  Future<List<dynamic>> fetchComments(int markerId) async {
+    final response = await http.post(
+        Uri.parse('http://${urlMain}/project/getCommentsForMarker.php'),
+        body: {
+          'marker_id': markerId.toString(),
+        });
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to retrieve comments');
+    }
+  }
+
   //Post comment
   Future<void> postComment(
-      int userId, String commentContent, String timestamp, int markerId) async {
-    final response = await http.post(
-      Uri.parse('http://${urlMain}/project/postComment.php'),
-      body: {
-        'user_id': userId,
-        'comment_content': commentContent,
-        'Marker_ID': markerId,
-      },
-    );
-
+      int markerId, int userId, String commentContent) async {
+    final response = await http
+        .post(Uri.parse('http://${urlMain}/project/postComment.php'), body: {
+      'marker_id': markerId.toString(),
+      'user_id': userId.toString(),
+      'comment_content': commentContent,
+    });
     if (response.statusCode == 200) {
-      // Comment was posted successfully
-      print('Comment posted successfully');
+      // Parse the response as JSON and return the comment ID
+      final data = json.decode(response.body);
+      return data['comment_id'];
     } else {
-      // Comment posting failed
-      throw Exception('Failed to post comment: ${response.body}');
+      // Handle the error
+      throw Exception('Failed to post comment: ${response.statusCode}');
     }
   }
 
@@ -81,8 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Marker>> getAllMarkers() async {
     final response = await http
         .get(Uri.parse('http://${urlMain}/project/getAllMarkers.php'));
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    //print('Response status: ${response.statusCode}');
+    //print('Response body: ${response.body}');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as List<dynamic>;
 
@@ -175,11 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   actions: [
                     IconButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginView()),
-                        );
+                        islogged = !islogged;
+                        (context as Element).reassemble();
                       },
                       icon: const Icon(Icons.login_outlined),
                     ),
@@ -221,6 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
               } else {
                 return AppBar(
                   centerTitle: true,
+                  backgroundColor: Color(0xFFe8eaed),
                   title: Center(
                     child: ElevatedButton(
                         onPressed: () {
@@ -246,10 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   _markers.addAll(snapshot.data!);
-                } else {
-                  print("girmedi");
-                  print('Data retrieved: ${snapshot.data}');
-                }
+                } else {}
                 return GoogleMap(
                   // MARKER OBJCET
                   //
@@ -280,22 +289,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     textController.text);
                                 Navigator.of(context).pop(textController.text!);
                                 textController.clear();
+                                setState(() {
+                                  futuremarker = getAllMarkers();
+                                });
                               },
                             ),
                           ],
                         );
                       },
                     );
-                    if (comment != null) {
-                      setState(() {
-                        _markers.add(Marker(
-                          markerId: MarkerId(position.toString()),
-                          position: position,
-                          infoWindow: InfoWindow(title: comment),
-                        ));
-                        _comments.add(comment);
-                      });
-                    }
                   },
                   markers: _markers.map((Marker marker) {
                     return Marker(
@@ -310,23 +312,41 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: _comments.length,
-                                    itemBuilder:
-                                        (BuildContext context, int index) {
-                                      return ListTile(
-                                        title: Text(_comments[index]),
-                                        trailing: IconButton(
-                                          icon: Icon(Icons.delete),
-                                          onPressed: () {
-                                            setState(() {
-                                              _comments.removeAt(index);
-                                            });
-                                            Navigator.pop(context);
+                                  FutureBuilder<List<dynamic>>(
+                                    future: fetchComments(
+                                        int.parse(marker.markerId.value)),
+                                    builder: (BuildContext context,
+                                        AsyncSnapshot<List<dynamic>> snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return CircularProgressIndicator();
+                                      } else if (snapshot.hasError) {
+                                        return Text('No Comments Found',
+                                            textScaleFactor: 1.5);
+                                      } else {
+                                        List? _comments = snapshot.data;
+
+                                        return ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: _comments?.length,
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
+                                            return ListTile(
+                                              title: Text(_comments![index]
+                                                  ['Comment_Content']),
+                                              trailing: IconButton(
+                                                icon: Icon(Icons.delete),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _comments!.removeAt(index);
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                              ),
+                                            );
                                           },
-                                        ),
-                                      );
+                                        );
+                                      }
                                     },
                                   ),
                                   ElevatedButton(
@@ -350,6 +370,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       textController.text!);
                                                 });
                                                 // Save the new comment to the database or state
+                                                postComment(
+                                                    int.parse(
+                                                        marker.markerId.value),
+                                                    1,
+                                                    textController.text);
 
                                                 Navigator.of(context).pop();
                                               },
@@ -405,6 +430,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
 /*
 target: LatLng(38.729210, 35.483910),
 markers: _markers.map((Marker marker) {
