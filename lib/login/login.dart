@@ -25,6 +25,7 @@ class _LoginViewState extends State<LoginView> {
     });
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
+      //print(data[0]['User_name']);
       if (data.isNotEmpty) {
         print('Successfully logged in');
         return true;
@@ -32,6 +33,24 @@ class _LoginViewState extends State<LoginView> {
     }
     print('Failed to login');
     return false;
+  }
+
+  Future<String> getUsername(String username, String password) async {
+    final url = 'http://${urlMain}/project/logincheck.php';
+    final response = await http.post(Uri.parse(url), body: {
+      'username': username,
+      'password': password,
+    });
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      //print(data[0]['User_name']);
+      if (data.isNotEmpty) {
+        print('name-received');
+        return data[0]['User_name'];
+      }
+    }
+    print('Failed to login');
+    return 'no-user-detected';
   }
 
   @override
@@ -63,6 +82,9 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () async {
                 final bool loginSuccess = await login(
                     usernameController.text, passwordController.text);
+                String name = getUsername(
+                    usernameController.text, passwordController.text) as String;
+                //print(name);
                 if (loginSuccess) {
                   Provider.of<LoginStatus>(context, listen: false)
                       .toggleLogStatus();

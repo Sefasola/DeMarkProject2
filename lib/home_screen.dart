@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: MaterialApp(
           home: Scaffold(
         appBar: PreferredSize(
-            preferredSize: Size.fromHeight(80.0),
+            preferredSize: Size.fromHeight(90.0),
             child:
                 Consumer<LoginStatus>(builder: (context, loginStatus, child) {
               if (islogged) {
@@ -205,6 +205,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     preferredSize: const Size.fromHeight(20.0),
                     child: Text(
                       "level : admin",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black),
                       textScaleFactor: 1.2,
                     ),
                   ),
