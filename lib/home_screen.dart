@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:comment_box/comment/comment.dart';
 import 'package:flutter/material.dart';
-
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import './login/login.dart';
@@ -16,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String urlMain = '192.168.1.194';
+  String urlMain = '10.32.1.130';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
@@ -65,9 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  //itertaion-2 notes
-  //--------------------
-//will be re-arranged to take user_id as input also
+//iteration-2 notes
+//--------------------
+//will be re-arranged to take user_id as input also (DONE)
 //include the comments to access user_id
 //implement a filter to search category for places
 //3 weeks (05.05.23)
@@ -155,7 +155,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Future<String> fetchUserName(int userId) async {
+      final url = 'http://${urlMain}/project/userNameBringer.php';
+      final response = await http.post(
+        Uri.parse(url),
+        body: {
+          'userId': userId.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['userName'];
+      } else {
+        throw Exception('Failed to fetch user');
+      }
+    }
+
+    late bool matchId;
     bool islogged = Provider.of<LoginStatus>(context, listen: false).isLoggedIn;
+    String userLevel = Provider.of<LoginStatus>(context, listen: false).level;
+    int userId = Provider.of<LoginStatus>(context, listen: false).userId;
+    String userName = Provider.of<LoginStatus>(context, listen: false).userName;
+
     return MultiProvider(
       providers: [
         Provider<LoginStatus>(
@@ -185,8 +207,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  title: const Text(
-                    'Name',
+                  title: Text(
+                    userName,
                     style: TextStyle(
                       fontFamily: 'Nunito',
                     ),
@@ -210,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   bottom: PreferredSize(
                     preferredSize: const Size.fromHeight(20.0),
                     child: Text(
-                      "level : admin",
+                      userLevel,
                       style: TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black),
                       textScaleFactor: 1.2,
@@ -289,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             TextButton(
                               child: Text('ADD'),
                               onPressed: () {
-                                print(position.longitude);
+                                //print(position.longitude);
                                 postMarker(
                                     position.latitude,
                                     position.longitude,
@@ -334,23 +356,63 @@ class _HomeScreenState extends State<HomeScreen> {
                                       } else {
                                         List? _comments = snapshot.data;
 
+                                        //print(_comments);
+
                                         return ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: _comments?.length,
                                           itemBuilder: (BuildContext context,
                                               int index) {
-                                            return ListTile(
-                                              title: Text(_comments![index]
-                                                  ['Comment_Content']),
-                                              trailing: IconButton(
-                                                icon: Icon(Icons.delete),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    _comments!.removeAt(index);
-                                                  });
-                                                  Navigator.pop(context);
-                                                },
-                                              ),
+                                            bool matchId = int.parse(
+                                                    _comments![index]
+                                                        ['User_ID']) ==
+                                                userId;
+                                            print(matchId);
+                                            return FutureBuilder<String>(
+                                              future: fetchUserName(int.parse(
+                                                  _comments![index]
+                                                      ['User_ID'])),
+                                              builder: (BuildContext context,
+                                                  AsyncSnapshot<String>
+                                                      snapshot) {
+                                                if (snapshot.connectionState ==
+                                                    ConnectionState.waiting) {
+                                                  return ListTile(
+                                                    title: Text(
+                                                      _comments![index]
+                                                          ['Comment_Content'],
+                                                    ),
+                                                    subtitle: Text(
+                                                        'Loading user name...'),
+                                                  );
+                                                } else if (snapshot.hasError) {
+                                                  return ListTile(
+                                                    title: Text(
+                                                      _comments![index]
+                                                          ['Comment_Content'],
+                                                    ),
+                                                    subtitle: Text(
+                                                        'Failed to fetch user name'),
+                                                  );
+                                                } else {
+                                                  //print("userid");
+                                                  //print(_comments[index]['User_ID']);
+                                                  String userName =
+                                                      snapshot.data!;
+                                                  return ListTile(
+                                                    title: Text(_comments[index]
+                                                        ['Comment_Content']),
+                                                    subtitle: Text(userName),
+                                                    trailing: matchId
+                                                        ? IconButton(
+                                                            icon: Icon(
+                                                                Icons.delete),
+                                                            onPressed: () {},
+                                                          )
+                                                        : Container(),
+                                                  );
+                                                }
+                                              },
                                             );
                                           },
                                         );
@@ -359,45 +421,77 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: Text('Add a new comment:'),
-                                          content: TextField(
-                                            controller: textController,
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  'Type your comment here...',
+                                      if (islogged) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text('Add a new comment:'),
+                                            content: TextField(
+                                              controller: textController,
+                                              decoration: InputDecoration(
+                                                hintText:
+                                                    'Type your comment here...',
+                                              ),
                                             ),
-                                          ),
-                                          actions: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _comments.add(
-                                                      textController.text!);
-                                                });
-                                                // Save the new comment to the database or state
-                                                postComment(
-                                                    int.parse(
-                                                        marker.markerId.value),
-                                                    1,
-                                                    textController.text);
+                                            actions: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _comments.add(
+                                                        textController.text!);
+                                                  });
+                                                  // Save the new comment to the database or state
+                                                  postComment(
+                                                      int.parse(marker
+                                                          .markerId.value),
+                                                      userId,
+                                                      textController.text);
 
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Save Comment'),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                // Close the alert dialog without saving the comment
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Cancel'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: Text('Save Comment'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  // Close the alert dialog without saving the comment
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: Text('Cancel'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+                                        showDialog(
+                                            context: context,
+                                            builder: ((context) => AlertDialog(
+                                                  title: Text(
+                                                      'You Need be Logged In to Comment'),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  const LoginView()),
+                                                        );
+                                                        setState(() {});
+                                                      },
+                                                      child: Text('Login Page'),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        // Close the alert dialog without saving the comment
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child: Text('Cancel'),
+                                                    ),
+                                                  ],
+                                                )));
+                                      }
                                     },
                                     child: Text('Add a New Comment'),
                                   ),

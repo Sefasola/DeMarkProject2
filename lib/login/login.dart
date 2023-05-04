@@ -13,7 +13,10 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final String urlMain = '192.168.1.194';
+  late String nameL;
+  late String userId;
+  late String level;
+  final String urlMain = '10.32.1.130';
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -25,7 +28,9 @@ class _LoginViewState extends State<LoginView> {
     });
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      //print(data[0]['User_name']);
+      nameL = data[0]['User_name'];
+      userId = data[0]['User_ID'];
+      level = data[0]['Level'];
       if (data.isNotEmpty) {
         print('Successfully logged in');
         return true;
@@ -33,24 +38,6 @@ class _LoginViewState extends State<LoginView> {
     }
     print('Failed to login');
     return false;
-  }
-
-  Future<String> getUsername(String username, String password) async {
-    final url = 'http://${urlMain}/project/logincheck.php';
-    final response = await http.post(Uri.parse(url), body: {
-      'username': username,
-      'password': password,
-    });
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      //print(data[0]['User_name']);
-      if (data.isNotEmpty) {
-        print('name-received');
-        return data[0]['User_name'];
-      }
-    }
-    print('Failed to login');
-    return 'no-user-detected';
   }
 
   @override
@@ -82,12 +69,12 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () async {
                 final bool loginSuccess = await login(
                     usernameController.text, passwordController.text);
-                /*String name = getUsername(
-                    usernameController.text, passwordController.text) as String;*/
-                //print(name);
+                print(nameL);
                 if (loginSuccess) {
                   Provider.of<LoginStatus>(context, listen: false)
                       .toggleLogStatus();
+                  Provider.of<LoginStatus>(context, listen: false)
+                      .updateUser(int.parse(userId), nameL, level);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (isLoggedIn) => HomeScreen()),
