@@ -71,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
 //include the comments to access user_id
 //implement a filter to search category for places
 //3 weeks (05.05.23)
+
   Future postMarker(
       double posX, double posY, String title, String message) async {
     final response = await http
@@ -400,14 +401,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   String userName =
                                                       snapshot.data!;
                                                   return ListTile(
-                                                    title: Text(_comments[index]
+                                                    title: Text(_comments![
+                                                            index]
                                                         ['Comment_Content']),
                                                     subtitle: Text(userName),
                                                     trailing: matchId
-                                                        ? IconButton(
-                                                            icon: Icon(
-                                                                Icons.delete),
-                                                            onPressed: () {},
+                                                        ? SizedBox(
+                                                            width: 48.0,
+                                                            child: IconButton(
+                                                              icon: Icon(
+                                                                  Icons.delete),
+                                                              onPressed: () {
+                                                                setState(() {
+                                                                  _comments!
+                                                                      .removeAt(
+                                                                          index);
+                                                                });
+                                                                Navigator.pop(
+                                                                    context);
+                                                              },
+                                                            ),
                                                           )
                                                         : Container(),
                                                   );

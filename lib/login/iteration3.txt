@@ -1,0 +1,7 @@
+- Like Button (DB)
+- It will be seem the ones who liked
+- Try to take photo input for profiles
+- Message System
+
+2 weeks interval (19/05/23)
+
