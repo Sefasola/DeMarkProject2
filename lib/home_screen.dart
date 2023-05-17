@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:comment_box/comment/comment.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:like_button/like_button.dart';
 import 'package:provider/provider.dart';
 import './login/login.dart';
 import 'package:http/http.dart' as http;
 import 'login/loginStatus.dart';
+import 'like/likeFunction.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String urlMain = '10.32.1.130';
+  String urlMain = '192.168.1.194';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
@@ -337,12 +339,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       infoWindow: marker.infoWindow,
                       onTap: () {
                         showModalBottomSheet(
+                          elevation: 0.5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
                           context: context,
                           builder: (BuildContext context) {
                             return Container(
                               child: Column(
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
+                                  Container(
+                                    height: 50,
+                                    width: 50,
+                                  ),
                                   FutureBuilder<List<dynamic>>(
                                     future: fetchComments(
                                         int.parse(marker.markerId.value)),
@@ -401,6 +411,41 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   String userName =
                                                       snapshot.data!;
                                                   return ListTile(
+                                                    leading: Container(
+                                                      height: 30,
+                                                      width: 40,
+                                                      child: GestureDetector(
+                                                        onLongPress: () {
+                                                          showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (context) {
+                                                                return AlertDialog(
+                                                                    content: Text(
+                                                                        'asd'));
+                                                              });
+                                                          print(_comments);
+                                                        },
+                                                        child: LikeButton(
+                                                          onTap:
+                                                              (isLiked) async {
+                                                            print(_comments[
+                                                                    index]
+                                                                ['Comment_ID']);
+                                                            int commentid =
+                                                                _comments[index]
+                                                                    [
+                                                                    'Comment_ID'];
+                                                            isLiked =
+                                                                await toggleLike(
+                                                                    userId,
+                                                                    commentid);
+                                                          },
+                                                          likeCount: 0,
+                                                          size: 25,
+                                                        ),
+                                                      ),
+                                                    ),
                                                     title: Text(_comments![
                                                             index]
                                                         ['Comment_Content']),
@@ -422,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               },
                                                             ),
                                                           )
-                                                        : Container(),
+                                                        : SizedBox(),
                                                   );
                                                 }
                                               },
@@ -545,45 +590,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-
-/*
-target: LatLng(38.729210, 35.483910),
-markers: _markers.map((Marker marker) {
-            return Marker(
-              markerId: marker.markerId,
-              position: marker.position,
-              infoWindow: marker.infoWindow,
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-
-                  builder: (BuildContext context) {
-                    return Container(
-                      height: 250,
-                      child:
-                      Column(
-                        children: [
-                          IconButton(
-                              color: Colors.black,
-                              onPressed: () {
-                                setState(() {
-                                  _markers.remove(marker);
-                                });
-
-                              },
-                              icon: Icon(Icons.remove_circle_outline)),
-                          Center(child: Text(marker.infoWindow.title!)),
-                        ],
-                      ),//
-                    );
-                  },
-                );
-              },
-            );
-          }).toSet(),
-
-
-
-
- */
