@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String urlMain = '10.32.0.196';
+  String urlMain = '192.168.1.194';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .post(Uri.parse('http://${urlMain}/project/postComment.php'), body: {
       'marker_id': markerId.toString(),
       'user_id': userId.toString(),
-      'comment_content':commentContent,
+      'comment_content': commentContent,
     });
     if (response.statusCode == 200) {
       // Parse the response as JSON and return the comment ID
@@ -241,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     IconButton(
                       onPressed: () {
-                        sendLikeStatusVoid();
+                        fetchLikeSituation(17, 1);
                       },
                       icon: const Icon(Icons.menu),
                     ),
@@ -432,34 +432,99 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       width: 40,
                                                       child: GestureDetector(
                                                           onLongPress: () {
-                                                        showDialog(
-                                                            context: context,
-                                                            builder: (context) {
-                                                              return AlertDialog(
-                                                                  content: Text(
-                                                                      'asd'));
-                                                            });
-                                                        //print(_comments);
-                                                      }, child: LikeButton(
-                                                        onTap: (isLiked) async {
+                                                            showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (context) {
+                                                                  return AlertDialog(
+                                                                      content: Text(
+                                                                          'asd'));
+                                                                });
+                                                            //print(_comments);
+                                                          },
+                                                          child: FutureBuilder<
+                                                              bool>(
+                                                            future: fetchLikeSituation(
+                                                                userId,
+                                                                int.parse(_comments![
+                                                                        index][
+                                                                    'comment_id'])),
+                                                            builder: (context,
+                                                                snapshot) {
+                                                              if (snapshot
+                                                                      .connectionState ==
+                                                                  ConnectionState
+                                                                      .waiting) {
+                                                                return CircularProgressIndicator();
+                                                              } else if (snapshot
+                                                                  .hasError) {
+                                                                return Text(
+                                                                    'Error: ${snapshot.error}');
+                                                              } else {
+                                                                final bool
+                                                                    isLiked =
+                                                                    snapshot.data ??
+                                                                        false;
 
-                                                          if (isLiked) {
-                                                            await sendLikeStatus(userId, int.parse(_comments![
-                                                          index][
-                                                          'comment_id']),false);
-                                                            print(
-                                                                'User unliked the comment');
-                                                          } else {
-                                                            await sendLikeStatus(userId, int.parse(_comments![
-                                                            index][
-                                                            'comment_id']),true);
-                                                            print(
-                                                                'User liked the comment');
-                                                          }
-                                                          // Return the new liked state
-                                                          return !isLiked;
-                                                        },
-                                                      )),
+                                                                return FutureBuilder<
+                                                                    int>(
+                                                                  future: fetchLikeCount(
+                                                                      _comments![
+                                                                              index]
+                                                                          [
+                                                                          'comment_id']),
+                                                                  builder: (context,
+                                                                      snapshot) {
+                                                                    if (snapshot
+                                                                            .connectionState ==
+                                                                        ConnectionState
+                                                                            .waiting) {
+                                                                      return CircularProgressIndicator();
+                                                                    } else if (snapshot
+                                                                        .hasError) {
+                                                                      return Text(
+                                                                          'Error: ${snapshot.error}');
+                                                                    } else {
+                                                                      final int
+                                                                          likeCount =
+                                                                          snapshot.data ??
+                                                                              0;
+
+                                                                      return LikeButton(
+                                                                        isLiked:
+                                                                            isLiked,
+                                                                        onTap:
+                                                                            (isLiked) async {
+                                                                          if (isLiked) {
+                                                                            await sendLikeStatus(
+                                                                              userId,
+                                                                              int.parse(_comments![index]['comment_id']),
+                                                                              0,
+                                                                            );
+                                                                            print('User unliked the comment');
+                                                                          } else {
+                                                                            await sendLikeStatus(
+                                                                              userId,
+                                                                              int.parse(_comments![index]['comment_id']),
+                                                                              1,
+                                                                            );
+                                                                            print('User liked the comment');
+                                                                          }
+                                                                          // Return the new liked state
+                                                                          return !isLiked;
+                                                                        },
+                                                                        likeCount:
+                                                                            likeCount,
+                                                                        size:
+                                                                            28,
+                                                                      );
+                                                                    }
+                                                                  },
+                                                                );
+                                                              }
+                                                            },
+                                                          )),
                                                     ),
                                                     title: Text(_comments![
                                                             index]

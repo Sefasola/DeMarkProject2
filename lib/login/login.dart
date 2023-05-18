@@ -5,7 +5,6 @@ import 'package:project2/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'loginProvider.dart';
 
-
 class LoginView extends StatefulWidget {
   const LoginView({Key? key});
 
@@ -17,7 +16,7 @@ class _LoginViewState extends State<LoginView> {
   late String nameL;
   late String userId;
   late String level;
-  final String urlMain = '10.32.0.196';
+  final String urlMain = '192.168.1.194';
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
