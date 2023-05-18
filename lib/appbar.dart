@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'login/loginStatus.dart';
+import 'login/loginProvider.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override

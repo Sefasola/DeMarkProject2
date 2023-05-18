@@ -11,7 +11,7 @@ $username = mysqli_real_escape_string($conn, $_POST['username']);
 $password = mysqli_real_escape_string($conn, $_POST['password']);
 
 // Query the database
-$sql = "SELECT User_ID, User_name, pass_word, Level FROM usertable WHERE User_name = '$username' AND pass_word = '$password'";
+$sql = "SELECT user_id, user_name, pass_word, level FROM usertable WHERE user_name = '$username' AND pass_word = '$password'";
 $result = mysqli_query($conn, $sql);
 
 // Check for errors
@@ -27,9 +27,9 @@ if (mysqli_num_rows($result) > 0) {
     // Loop through the result set
     while ($row = mysqli_fetch_assoc($result)) {
         $user = array(
-            'User_ID' => $row['User_ID'],
-            'User_name' => $row['User_name'],
-            'Level' => $row['Level']
+            'user_id' => $row['user_id'],
+            'user_name' => $row['user_name'],
+            'level' => $row['level']
         );
         array_push($users, $user);
     }

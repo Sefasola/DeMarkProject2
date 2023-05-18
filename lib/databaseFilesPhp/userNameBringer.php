@@ -10,7 +10,7 @@ if (!$conn) {
 $userId = mysqli_real_escape_string($conn, $_POST['userId']);
 
 // Query the database
-$sql = "SELECT User_name FROM usertable WHERE User_ID = '$userId'";
+$sql = "SELECT user_name FROM usertable WHERE User_ID = '$userId'";
 $result = mysqli_query($conn, $sql);
 
 // Check for errors
@@ -22,7 +22,7 @@ if (!$result) {
 if (mysqli_num_rows($result) > 0) {
     // Fetch the username from the result set
     $row = mysqli_fetch_assoc($result);
-    $userName = $row['User_name'];
+    $userName = $row['user_name'];
 
     // Send the JSON response
     header('Content-Type: application/json');

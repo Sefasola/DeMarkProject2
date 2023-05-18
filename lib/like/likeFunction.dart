@@ -1,31 +1,40 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+String urlMain = '10.32.0.196';
 
-Future<bool> toggleLike(int userId, int commentId) async {
-  String urlMain = '192.168.1.194';
+Future<void> sendLikeStatus(
+    int userId, int commentId, bool likeStatus) async {
   final response = await http.post(
-    Uri.parse('http://${urlMain}/project/postLike.php'),
+    Uri.parse('http://${urlMain}/project/sendLikeStatus.php'),
     body: {
-      'user_id': userId,
-      'comment_id': commentId,
+      'comment_id': commentId.toString(),
+      'user_id': userId.toString(),
+      'like_status': likeStatus.toString(),
+    },
+  );
+  if (response.statusCode == 200) {
+    print('Like status updated successfully');
+  } else {
+    print('Failed to update like status');
+  }
+}
+Future<void> sendLikeStatusVoid() async {
+  int commentId = 17;
+  int userId = 1;
+  bool likeStatus = false;
+  final response = await http.post(
+    Uri.parse('http://${urlMain}/project/sendLikeStatus.php'),
+    body: {
+      'comment_id': commentId.toString(),
+      'user_id': userId.toString(),
+      'like_status': likeStatus.toString(),
     },
   );
 
   if (response.statusCode == 200) {
-    final responseData = json.decode(response.body);
-    final status = responseData['status'];
-    final message = responseData['message'];
-
-    if (status == 'success') {
-      print(message);
-      return true; // Like/unlike operation successful
-    } else {
-      print('Error: $message');
-      return false; // Like/unlike operation failed
-    }
+    print('Like status updated successfully');
   } else {
-    print('HTTP request failed with status: ${response.statusCode}');
-    return false; // HTTP request failed
+    print('Failed to update like status');
   }
 }

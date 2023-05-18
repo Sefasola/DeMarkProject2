@@ -31,9 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  google_maps_flutter: ^2.2.5
-  http: ^0.13.5
-  mysql1: ^0.20.0
+  google_maps_flutter: ^2.2.6
+  http: ^0.13.6
   crypto: ^3.0.1
   fluttertoast: ^8.2.1
   comment_box: ^0.0.18

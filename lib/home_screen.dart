@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:comment_box/comment/comment.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:like_button/like_button.dart';
 import 'package:provider/provider.dart';
 import './login/login.dart';
 import 'package:http/http.dart' as http;
-import 'login/loginStatus.dart';
+import 'login/loginProvider.dart';
 import 'like/likeFunction.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String urlMain = '192.168.1.194';
+  String urlMain = '10.32.0.196';
   Completer<GoogleMapController> _controller = Completer();
   static final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(33.6844, 73.0479),
@@ -55,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .post(Uri.parse('http://${urlMain}/project/postComment.php'), body: {
       'marker_id': markerId.toString(),
       'user_id': userId.toString(),
-      'comment_content': commentContent,
+      'comment_content':commentContent,
     });
     if (response.statusCode == 200) {
       // Parse the response as JSON and return the comment ID
@@ -138,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('Failed to get markers: ${response.body}');
     }
   }
+
 // post comment Fonksyonu
 
   // markerları futurdan kurtarma fonksyonu
@@ -241,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     IconButton(
                       onPressed: () {
-                        // handle menu button press
+                        sendLikeStatusVoid();
                       },
                       icon: const Icon(Icons.menu),
                     ),
@@ -431,34 +431,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       height: 30,
                                                       width: 40,
                                                       child: GestureDetector(
-                                                        onLongPress: () {
-                                                          showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (context) {
-                                                                return AlertDialog(
-                                                                    content: Text(
-                                                                        'asd'));
-                                                              });
-                                                          //print(_comments);
+                                                          onLongPress: () {
+                                                        showDialog(
+                                                            context: context,
+                                                            builder: (context) {
+                                                              return AlertDialog(
+                                                                  content: Text(
+                                                                      'asd'));
+                                                            });
+                                                        //print(_comments);
+                                                      }, child: LikeButton(
+                                                        onTap: (isLiked) async {
+
+                                                          if (isLiked) {
+                                                            await sendLikeStatus(userId, int.parse(_comments![
+                                                          index][
+                                                          'comment_id']),false);
+                                                            print(
+                                                                'User unliked the comment');
+                                                          } else {
+                                                            await sendLikeStatus(userId, int.parse(_comments![
+                                                            index][
+                                                            'comment_id']),true);
+                                                            print(
+                                                                'User liked the comment');
+                                                          }
+                                                          // Return the new liked state
+                                                          return !isLiked;
                                                         },
-                                                        child: LikeButton(
-                                                          onTap:
-                                                              (isLiked) async {
-                                                            //print(_comments[index]['comment_id']);
-                                                            int commentid =
-                                                                _comments[index]
-                                                                    [
-                                                                    'comment_id'];
-                                                            isLiked =
-                                                                await toggleLike(
-                                                                    userId,
-                                                                    commentid);
-                                                          },
-                                                          likeCount: 0,
-                                                          size: 25,
-                                                        ),
-                                                      ),
+                                                      )),
                                                     ),
                                                     title: Text(_comments![
                                                             index]

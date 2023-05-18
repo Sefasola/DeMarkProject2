@@ -13,11 +13,11 @@ if ($result->num_rows > 0) {
     // Loop through each marker and add it to the array
     while ($row = $result->fetch_assoc()) {
         $markers[] = array(
-            'marker_id' => $row['Marker_ID'],
-            'position_x' => $row['Position_X'],
-            'position_y' => $row['Position_Y'],
-            'title' => $row['Title'],
-            'message' => $row['Message'],
+            'marker_id' => $row['marker_id'],
+            'position_x' => $row['position_x'],
+            'position_y' => $row['position_y'],
+            'title' => $row['title'],
+            'message' => $row['message'],
         );
     }
 
