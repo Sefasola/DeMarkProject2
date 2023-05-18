@@ -28,9 +28,9 @@ class _LoginViewState extends State<LoginView> {
     });
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      nameL = data[0]['User_name'];
-      userId = data[0]['User_ID'];
-      level = data[0]['Level'];
+      nameL = data[0]['user_name'];
+      userId = data[0]['user_id'];
+      level = data[0]['level'];
       if (data.isNotEmpty) {
         print('Successfully logged in');
         return true;
