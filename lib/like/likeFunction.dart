@@ -81,7 +81,7 @@ Future<int> fetchLikeCount(String commentId) async {
   return 0;
 }
 
-Future<List<Map<String, dynamic>>> fetchLikedUsers(int commentId) async {
+Future<List<Map<String, dynamic>>> fetchLikedUsers(String commentId) async {
   final response = await http.post(
     Uri.parse('http://${urlMain}/project/fetchLikedUsers.php'),
     body: {'comment_id': commentId},
@@ -93,11 +93,12 @@ Future<List<Map<String, dynamic>>> fetchLikedUsers(int commentId) async {
 
     for (var user in jsonData) {
       likedUsers.add({
+        'level': user['level'],
         'user_id': user['user_id'],
         'user_name': user['user_name'],
       });
     }
-
+    print(response.body);
     return likedUsers;
   } else {
     throw Exception('Failed to fetch liked users');

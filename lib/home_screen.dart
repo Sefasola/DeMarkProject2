@@ -104,15 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Marker>> getAllMarkers() async {
     final response = await http
         .get(Uri.parse('http://${urlMain}/project/getAllMarkers.php'));
-    //print('Response status: ${response.statusCode}');
-    //print('Response body: ${response.body}');
     if (response.statusCode == 200) {
-      //print('SUCCESS');
-      //print('Response body: ${response.body}');
       final data = jsonDecode(response.body) as List<dynamic>;
 
       try {
-        //print('trya girdi');
         final List<Marker> markers = data
             .map((markerJson) => Marker(
                   markerId: MarkerId(markerJson["marker_id"].toString()),
@@ -123,10 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       snippet: markerJson['message']),
                 ))
             .toList();
-        //print(markers[0]);
         return markers;
       } catch (e) {
-        //print('catche girdi');
         print("An error occurred while mapping marker data: $e");
         // You can choose to return an empty list or handle the error accordingly
         // For example, you can throw an exception to propagate the error to the caller
@@ -305,9 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   _markers.addAll(snapshot.data!);
-                } else {
-                  //print('snapshot bos');
-                }
+                } else {}
                 return GoogleMap(
                   // MARKER OBJCET
                   //
@@ -330,7 +321,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             TextButton(
                               child: Text('ADD'),
                               onPressed: () {
-                                //print(position.longitude);
                                 postMarker(
                                     position.latitude,
                                     position.longitude,
@@ -383,8 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       } else {
                                         List? _comments = snapshot.data;
 
-                                        //print(snapshot.data);
-
                                         return ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: _comments?.length,
@@ -394,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     _comments![index]
                                                         ['user_id']) ==
                                                 userId;
-                                            //print(matchId);
                                             return FutureBuilder<String>(
                                               future: fetchUserName(int.parse(
                                                   _comments![index]
@@ -422,8 +409,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         'Failed to fetch user name'),
                                                   );
                                                 } else {
-                                                  //print("userid");
-                                                  //print(_comments[index]['User_ID']);
                                                   String userName =
                                                       snapshot.data!;
                                                   return ListTile(
@@ -431,100 +416,159 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       height: 30,
                                                       width: 40,
                                                       child: GestureDetector(
-                                                          onLongPress: () {
-                                                            showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder:
-                                                                    (context) {
-                                                                  return AlertDialog(
-                                                                      content: Text(
-                                                                          'asd'));
-                                                                });
-                                                            //print(_comments);
-                                                          },
-                                                          child: FutureBuilder<
-                                                              bool>(
-                                                            future: fetchLikeSituation(
-                                                                userId,
-                                                                int.parse(_comments![
-                                                                        index][
-                                                                    'comment_id'])),
-                                                            builder: (context,
-                                                                snapshot) {
-                                                              if (snapshot
-                                                                      .connectionState ==
-                                                                  ConnectionState
-                                                                      .waiting) {
-                                                                return CircularProgressIndicator();
-                                                              } else if (snapshot
-                                                                  .hasError) {
-                                                                return Text(
-                                                                    'Error: ${snapshot.error}');
-                                                              } else {
-                                                                final bool
-                                                                    isLiked =
-                                                                    snapshot.data ??
-                                                                        false;
+                                                        child:
+                                                            FutureBuilder<bool>(
+                                                          future: fetchLikeSituation(
+                                                              userId,
+                                                              int.parse(_comments![
+                                                                      index][
+                                                                  'comment_id'])),
+                                                          builder: (context,
+                                                              snapshot) {
+                                                            if (snapshot
+                                                                    .connectionState ==
+                                                                ConnectionState
+                                                                    .waiting) {
+                                                              return CircularProgressIndicator();
+                                                            } else if (snapshot
+                                                                .hasError) {
+                                                              return Text(
+                                                                  'Error: ${snapshot.error}');
+                                                            } else {
+                                                              final bool
+                                                                  isLiked =
+                                                                  snapshot.data ??
+                                                                      false;
 
-                                                                return FutureBuilder<
-                                                                    int>(
-                                                                  future: fetchLikeCount(
+                                                              return FutureBuilder<
+                                                                  int>(
+                                                                future: fetchLikeCount(
+                                                                    _comments![
+                                                                            index]
+                                                                        [
+                                                                        'comment_id']),
+                                                                builder: (context,
+                                                                    snapshot) {
+                                                                  if (snapshot
+                                                                          .connectionState ==
+                                                                      ConnectionState
+                                                                          .waiting) {
+                                                                    return CircularProgressIndicator();
+                                                                  } else if (snapshot
+                                                                      .hasError) {
+                                                                    return Text(
+                                                                        'Error: ${snapshot.error}');
+                                                                  } else {
+                                                                    final int
+                                                                        likeCount =
+                                                                        snapshot.data ??
+                                                                            0;
+
+                                                                    return LikeButton(
+                                                                      isLiked:
+                                                                          isLiked,
+                                                                      onTap:
+                                                                          (isLiked) async {
+                                                                        if (isLiked) {
+                                                                          await sendLikeStatus(
+                                                                            userId,
+                                                                            int.parse(_comments![index]['comment_id']),
+                                                                            0,
+                                                                          );
+                                                                        } else {
+                                                                          await sendLikeStatus(
+                                                                            userId,
+                                                                            int.parse(_comments![index]['comment_id']),
+                                                                            1,
+                                                                          );
+                                                                        }
+                                                                        // Return the new liked state
+                                                                        return !isLiked;
+                                                                      },
+                                                                      likeCount:
+                                                                          likeCount,
+                                                                      size: 28,
+                                                                    );
+                                                                  }
+                                                                },
+                                                              );
+                                                            }
+                                                          },
+                                                        ),
+                                                        onLongPress: () {
+                                                          showDialog(
+                                                            context: context,
+                                                            builder: (context) {
+                                                              return Dialog(
+                                                                child: FutureBuilder<
+                                                                    List<
+                                                                        Map<String,
+                                                                            dynamic>>>(
+                                                                  future: fetchLikedUsers(
                                                                       _comments![
                                                                               index]
                                                                           [
-                                                                          'comment_id']),
+                                                                          'comment_id']), // Replace with your actual fetchLikedUsers function
                                                                   builder: (context,
                                                                       snapshot) {
                                                                     if (snapshot
                                                                             .connectionState ==
                                                                         ConnectionState
                                                                             .waiting) {
-                                                                      return CircularProgressIndicator();
+                                                                      return Center(
+                                                                          child:
+                                                                              CircularProgressIndicator());
                                                                     } else if (snapshot
                                                                         .hasError) {
                                                                       return Text(
                                                                           'Error: ${snapshot.error}');
                                                                     } else {
-                                                                      final int
-                                                                          likeCount =
+                                                                      final userList =
                                                                           snapshot.data ??
-                                                                              0;
+                                                                              [];
 
-                                                                      return LikeButton(
-                                                                        isLiked:
-                                                                            isLiked,
-                                                                        onTap:
-                                                                            (isLiked) async {
-                                                                          if (isLiked) {
-                                                                            await sendLikeStatus(
-                                                                              userId,
-                                                                              int.parse(_comments![index]['comment_id']),
-                                                                              0,
-                                                                            );
-                                                                            print('User unliked the comment');
-                                                                          } else {
-                                                                            await sendLikeStatus(
-                                                                              userId,
-                                                                              int.parse(_comments![index]['comment_id']),
-                                                                              1,
-                                                                            );
-                                                                            print('User liked the comment');
-                                                                          }
-                                                                          // Return the new liked state
-                                                                          return !isLiked;
-                                                                        },
-                                                                        likeCount:
-                                                                            likeCount,
-                                                                        size:
-                                                                            28,
+                                                                      return Expanded(
+                                                                        child:
+                                                                            Column(
+                                                                          children: [
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.only(top: 15),
+                                                                              child: SizedBox(
+                                                                                child: Text(
+                                                                                  'Beğenenler',
+                                                                                  style: TextStyle(fontSize: 20),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            ListView.builder(
+                                                                              shrinkWrap: true,
+                                                                              itemCount: userList.length,
+                                                                              itemBuilder: (BuildContext context, int index) {
+                                                                                final user = userList[index];
+                                                                                return ListTile(
+                                                                                  title: Text(
+                                                                                    user['user_name'],
+                                                                                    style: TextStyle(fontSize: 22),
+                                                                                  ),
+                                                                                  subtitle: Text(
+                                                                                    user['level'],
+                                                                                    style: TextStyle(fontSize: 13),
+                                                                                  ),
+                                                                                  // Add other widget components as needed
+                                                                                );
+                                                                              },
+                                                                            ),
+                                                                          ],
+                                                                        ),
                                                                       );
                                                                     }
                                                                   },
-                                                                );
-                                                              }
+                                                                ),
+                                                              );
                                                             },
-                                                          )),
+                                                          );
+                                                        },
+                                                      ),
                                                     ),
                                                     title: Text(_comments![
                                                             index]
