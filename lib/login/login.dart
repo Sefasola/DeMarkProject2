@@ -16,7 +16,7 @@ class _LoginViewState extends State<LoginView> {
   late String nameL;
   late String userId;
   late String level;
-  final String urlMain = '192.168.1.194';
+  final String urlMain = '10.32.0.224';
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 

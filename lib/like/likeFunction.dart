@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-String urlMain = '192.168.1.194';
+String urlMain = '10.32.0.224';
 
 Future<void> sendLikeStatus(int userId, int commentId, int likeStatus) async {
   final response = await http.post(
